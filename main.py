@@ -1,21 +1,31 @@
 import random
-
+from Activations import Activation
+        
 class Perceptron():
-    def __init__(self):
+    def __init__(self, actvation):
         self.weights = []
+        self.activation = None
+        
+        match actvation:
+            case 'relu':
+                self.activation = Activation.ReLU
+                
+            case 'sigmoid':
+                pass
+            
+            case 'tanh':
+                pass
+            
+            case _:
+                pass
+            
     
     def process_input(self, inputs):
         sum = 0
         for i in range(len(self.weights)):
             sum =+ inputs[i]*self.weights[i]
             
-        return self.ReLU(sum)
-    
-    def ReLU(self, value):
-        if value > 0:
-            return value
-        else:
-            return 0
+        return self.activation(sum)
     
     def init_weights(self, n_weights):
         for i in range(n_weights):
@@ -42,7 +52,7 @@ class MLP():
         pass
             
             
-neuron = Perceptron()
+neuron = Perceptron('relu')
 
 values = [5,3,4,2,8,6]
 
