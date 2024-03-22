@@ -1,23 +1,20 @@
-import random
 import numpy as np
-from numba import njit
-from numba.typed import List
 from Activations import Activation
-        
-class Perceptron():
-    def __init__(self, actvation,n_weights,weights=None):
+
+
+class Perceptron(object):
+    def __init__(self, actvation, n_weights, weights=None):
         self.activation = None
         self.n_weights = n_weights
 
-
-        if(weights is None):
-            self.weights=(2*np.random.rand(n_weights))-1 #gera valores de parametros entre -1 e 1
+        if weights is None:
+            self.weights = (2*np.random.rand(n_weights))-1  # gera valores de parametros entre -1 e 1
         else:
-            self.weights=weights
+            self.weights = weights
         
         match actvation:
             case 'relu':
-                self.activation = Activation.ReLU
+                self.activation = Activation.relu
 
             case 'sigmoid':
                 self.activation = Activation.sigmoid
@@ -28,31 +25,32 @@ class Perceptron():
             case _:
                 pass
 
-    def process_input(self, inputs:np.ndarray) -> float:
-        sum = 0
+    def process_input(self, inputs) -> float:
+        somatorio = 0
         for i in range(self.n_weights-1):
-            sum += inputs[i]*self.weights[i]
-        sum+=self.weights[-1]
-        return self.activation(sum)
-    
-class MLP():
+            somatorio += inputs[i] * self.weights[i]
+        somatorio += self.weights[-1]
+        return self.activation(somatorio)
+
+
+class MLP(object):
     def __init__(self, n_inputs, n_hiden_layer, n_exits, activation='relu'):
         self.inputs = []
         self.exits = []
         self.hidden = []
-        self.count=0;
+        self.count = 0
         self.network = [self.inputs, self.hidden, self.exits]
         
         for i in range(n_inputs):
-            self.inputs.append(Perceptron(activation,0))
+            self.inputs.append(Perceptron(activation, 0))
 
         for i in range(n_hiden_layer):
-            self.hidden.append(Perceptron(activation,n_inputs))
+            self.hidden.append(Perceptron(activation, n_inputs))
 
         for i in range(n_exits):
-            self.exits.append(Perceptron(activation,n_hiden_layer))
+            self.exits.append(Perceptron(activation, n_hiden_layer))
 
-    #@jit(nopython=True)
+    # @njit(nopython=True)
     def foward(self, input_data):
         output_layer1 = np.array(input_data)
         output_layer2 = []
@@ -66,10 +64,8 @@ class MLP():
             
         return output_layer3
 
-            
 
-values = [5,3,4,2,8,6]
-
-nn = MLP(6,3,5)
-
-print(nn.foward(values))
+if __name__ == "__main__":
+    values = [5, 3, 4, 2, 8, 6]
+    nn = MLP(6, 3, 5)
+    print(nn.foward(values))
