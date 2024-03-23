@@ -52,7 +52,7 @@ class MLP():
     #@jit(nopython=True)
     def foward(self, input_data):
         output_layer1 = np.array(input_data)
-        output_layer2 = np.zeros()
+        output_layer2 = []
         output_layer3 = []
         
         start = time.time()
