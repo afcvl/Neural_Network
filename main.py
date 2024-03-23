@@ -1,22 +1,21 @@
 import numpy as np
-from numba import njit
-from numba.typed import List
 from Activations import Activation
-import time
+import time 
         
 class Perceptron():
     def __init__(self, actvation,n_weights,weights=None):
         self.activation = None
         self.n_weights = n_weights
 
+
         if(weights is None):
             self.weights=(2*np.random.rand(n_weights))-1 #gera valores de parametros entre -1 e 1
         else:
-            self.weights=weights
+            self.weights = weights
         
         match actvation:
             case 'relu':
-                self.activation = Activation.ReLU
+                self.activation = Activation.relu
 
             case 'sigmoid':
                 self.activation = Activation.sigmoid
@@ -26,7 +25,7 @@ class Perceptron():
             
             case _:
                 pass
-    
+
     def process_input(self, inputs:np.ndarray) -> float:
         sum = np.dot(self.weights, inputs)
        
@@ -49,7 +48,7 @@ class MLP():
         for i in range(n_exits):
             self.exits.append(Perceptron(activation, n_hiden_layer))
 
-    #@jit(nopython=True)
+    # @njit(nopython=True)
     def foward(self, input_data):
         output_layer1 = np.array(input_data)
         output_layer2 = []
@@ -74,6 +73,6 @@ class MLP():
 
 values = [5,3,4,2,8,6]
 
-nn = MLP(n_inputs=6, n_hiden_layer=100, n_exits=5)
+nn = MLP(6,3,5)
 
 print(nn.foward(values))
