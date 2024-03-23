@@ -55,7 +55,6 @@ class MLP:
         output_layer3 = []
         
         start = time.time()
-        print(start)
         for neuron in self.hidden:
             output_layer2.append(neuron.process_input(output_layer1))
 
