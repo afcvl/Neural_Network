@@ -4,7 +4,6 @@ from numba import jit, njit
 
 class Activation(object):
     @staticmethod
-    @jit(nopython=True)
     def relu(value: float) -> float:
         return np.maximum(0, value)
 
