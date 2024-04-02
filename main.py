@@ -6,10 +6,10 @@ from numpy import ndarray
 
 class Perceptron:
     def __init__(self, actvation, n_weights, weights=None):
-        self.n_weights = n_weights
+        self.n_weights = n_weights + 1 
 
         if weights is None:
-            self.weights = (2*np.random.rand(n_weights))-1  # gera valores de parametros entre -1 e 1
+            self.weights = (2*np.random.rand(n_weights+1))-1  # gera valores de parametros entre -1 e 1
         else:
             self.weights = weights
         
@@ -37,19 +37,23 @@ class MLP:
         self.inputs = []
         self.exits = []
         self.hidden = []
+        self.bias_value = 1
         self.count = 0
         self.network = [self.inputs, self.hidden, self.exits]
         
-        for i in range(n_inputs):
+        for i in range(n_inputs + 1):
             self.inputs.append(Perceptron(activation, 0))
 
-        for i in range(n_hiden_layer):
+        for i in range(n_hiden_layer + 1):
             self.hidden.append(Perceptron(activation, n_inputs))
 
-        for i in range(n_exits):
+        for i in range(n_exits + 1):
             self.exits.append(Perceptron(activation, n_hiden_layer))
 
     def foward(self, input_data):
+        
+        input_data.append(self.bias_value)
+    
         output_layer1 = np.array(input_data)
         output_layer2 = []
         output_layer3 = []
@@ -72,5 +76,5 @@ class MLP:
 
 if __name__ == '__main__':
     values = [5, 3, 4, 2, 8, 6]
-    nn = MLP(6, 3, 5)
+    nn = MLP(6, 1000, 3)
     print(nn.foward(values))
