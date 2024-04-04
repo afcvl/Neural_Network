@@ -29,95 +29,62 @@ class Perceptron:
                 pass
 
     def process_input(self, inputs: ndarray) -> float:
-        #  print(self.weights, inputs)
         soma = np.dot(self.weights, inputs)
+        
         return self.activation(soma)
 
 
 class MLP:
-    def __init__(self, layers, activation='relu'):
-        """
-        self.inputs = []
-        self.exits = []
-        self.hidden = []
-
-        for i in range(layers[0]):
-            self.inputs.append(Perceptron(activation, 0))
-
-        for i in range(layers[1]):
-            self.hidden.append(Perceptron(activation, layers[0]))
-
-        for i in range(layers[2]):
-            self.exits.append(Perceptron(activation, layers[1]))
-
-        self.network = [self.inputs, self.hidden, self.exits]
-        """
-
+    def __init__(self, size_layers, activation='relu'):
         self.network = []
-        anterior = 0
-        for tamanho in layers:
-            #  print(tamanho)
-            layers = []
-            for i in range(tamanho):
-                layers.append(Perceptron(activation, anterior))
+        
+        n_weights = 0
+        
+        for size in size_layers:
+            
+            neurons_list = []
+            
+            for _ in range(size):
+                neurons_list.append(Perceptron(activation, n_weights=n_weights))
 
-            self.network.append(layers)
-            anterior = tamanho
+            self.network.append(neurons_list)
+            
+            n_weights = size
 
-    def foward(self, input_data):
-        """
-        input_data.append(1)  # bias
+    def foward(self, input_data):    
+        input_values = input_data.copy()  # Cria uma cópia da lista original
+        input_values.append(1)
+        input_values = np.array(input_values, dtype=np.float64)
+        output_values = []
 
-        output_layer1 = np.array(input_data, dtype=np.float64)
-        output_layer2 = []
-        output_layer3 = []
-
-        start = time.time()
-        for neuron in self.hidden:
-            output_layer2.append(neuron.process_input(output_layer1))
-        output_layer2.append(1)  # append bias
-
-        output_layer2 = np.array(output_layer2, dtype=np.float64)
-
-        for neuron in self.exits:
-            output_layer3.append(neuron.process_input(output_layer2))
-
-        end = time.time()
-        duracao = end - start
-        print("tempo:",duracao,"s")
-
-        return output_layer3
-
-        """
-        input_data.append(1)  # bias
-        input_layer = np.array(input_data, dtype=np.float64)
-        output_layer = []
-
-        start = time.time()
-        first_layer_skipped = False
-
-        for index, layer in enumerate(self.network):
-            if not first_layer_skipped:
-                first_layer_skipped = True
-                continue
+        for layer in self.network[1:]:  # itera sobre as camadas excluindo a de entrada
 
             for neuron in layer:
-                output_layer.append(neuron.process_input(input_layer))
-            output_layer.append(1)  # append bias
+                output_values.append(neuron.process_input(input_values))
+            output_values.append(1)  # append bias
 
-            # input_layer para proxima interação ou saida da rede neural
-            input_layer = np.array(output_layer, dtype=np.float64)
-            output_layer = []
+            input_values = np.array(output_values, dtype=np.float64) # seta input_values que será usado na proxima camada
+            output_values = []
 
-        output_layer = np.delete(input_layer, -1)
-        end = time.time()
-        duracao = end - start
-        print("tempo:", duracao, "s")
-        
-        return output_layer
+        output_values = np.delete(input_values, -1)
+
+        return output_values
 
 
 if __name__ == '__main__':
     values = [5, 3, 4, 2, 8, 6, 5, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]
-    nn = MLP([len(values), 20000, 50, 20, 1000, 10])
-    print("saida:", nn.foward(values))
+    
+    nn = MLP(size_layers=[len(values), 20000, 50, 1000, 10])
+    
+    
+    n_runs = 10
+    start = time.time()
+    
+    for i in range(n_runs):
+        nn_output =  nn.foward(values)
+    
+    end = time.time()
+    avarege_time = (end - start)/n_runs
+    
+    print("saida da rede:", nn.foward(values).tolist())
+    print("tempo medio:", avarege_time, "s")
