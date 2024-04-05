@@ -1,7 +1,7 @@
 import numpy as np
 from Activations import Activation
-import time
 from numpy import ndarray
+import pickle
 
 
 class Perceptron:
@@ -25,33 +25,25 @@ class Perceptron:
             case 'tanh':
                 self.activation = Activation.tanh
 
+            case 'linear':
+                self.activation = Activation.linear
+
             case _:
                 pass
 
     def process_input(self, inputs: ndarray) -> float:
         soma = np.dot(self.weights, inputs)
-        
+
         return self.activation(soma)
 
 
 class MLP:
-    def __init__(self, size_layers, activation='relu'):
+    def __init__(self, file_name='key.bitcoin'):
+        self.file_name = file_name
         self.network = []
-        
-        n_weights = 0
-        
-        for size in size_layers:
-            
-            neurons_list = []
-            
-            for _ in range(size):
-                neurons_list.append(Perceptron(activation, n_weights=n_weights))
+        self.n_weights = 0
 
-            self.network.append(neurons_list)
-            
-            n_weights = size
-
-    def foward(self, input_data):    
+    def foward(self, input_data):
         input_values = input_data.copy()  # Cria uma cópia da lista original
         input_values.append(1)
         input_values = np.array(input_values, dtype=np.float64)
@@ -63,28 +55,73 @@ class MLP:
                 output_values.append(neuron.process_input(input_values))
             output_values.append(1)  # append bias
 
-            input_values = np.array(output_values, dtype=np.float64) # seta input_values que será usado na proxima camada
+            # seta input_values que será usado na proxima camada
+            input_values = np.array(output_values, dtype=np.float64)
             output_values = []
 
         output_values = np.delete(input_values, -1)
 
         return output_values
 
+    def add(self, number_neurons, activation):
+        neurons_list = []
+
+        for _ in range(number_neurons):
+            neurons_list.append(Perceptron(activation, self.n_weights))
+
+        self.network.append(neurons_list)
+        self.n_weights = number_neurons
+
+    def remove_last(self):
+        self.network.pop()
+
+    def salvar(self):
+        with open(self.file_name, 'wb') as f:
+            pickle.dump(self.network, f)
+
+    def carregar(self):
+        with open(self.file_name, 'rb') as f:
+            self.network = pickle.load(f)
+
+    def treinar(self, epochs, training_data, validation_data=None, learning_rate=1, parada_cedo=-1):
+        if validation_data is None:
+            validation_data = training_data
+        menor_erro = float('inf')
+        melhor_instancia = []  # salva a melhor instancia para caso de parada cedo
+
+        for epoch in range(epochs):
+            # treinar
+            erro = 2  # mudar erro para receber o erro do treino
+
+            print('Epoch {}/{}\t erro:{}'.format(epoch + 1, epochs, erro))
+
+            if parada_cedo != -1:
+                if menor_erro > erro:
+                    menor_erro = erro
+                    melhor_instancia = pickle.dumps(self.network)  # salva a melhor instancia
+
+                elif parada_cedo == 0:
+                    print("Numero maximo de interações sem melhoras atingido!\nInterações:{}"
+                          "\t erro:{} ".format(epoch, menor_erro))
+                    self.network = pickle.loads(melhor_instancia)  # carrega a melhor instancia
+
+                else:
+                    parada_cedo -= 1
+
 
 if __name__ == '__main__':
-    values = [5, 3, 4, 2, 8, 6, 5, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]
-    
-    nn = MLP(size_layers=[len(values), 20000, 50, 1000, 10])
-    
-    
-    n_runs = 10
-    start = time.time()
-    
-    for i in range(n_runs):
-        nn_output =  nn.foward(values)
-    
-    end = time.time()
-    avarege_time = (end - start)/n_runs
-    
-    print("saida da rede:", nn.foward(values).tolist())
-    print("tempo medio:", avarege_time, "s")
+    values = [1, 2, 3, 4, 5]
+    layers = [len(values), 5000, 2000, 100, 10]
+    nn = MLP()
+    for layer in layers:
+        nn.add(layer, 'relu')
+    nn.add(50, 'linear')
+    nn.remove_last()
+    nn.salvar()
+    saida1 = nn.foward(values)
+    # print("saida1:", saida1)
+    nn = MLP()
+    nn.carregar()
+    saida2 = nn.foward(values)
+    # print("saida2:", saida2)
+    print("diferença:", saida2-saida1)
