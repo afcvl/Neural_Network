@@ -7,6 +7,11 @@ class Activation(object):
     @njit()
     def relu(value: float) -> float:
         return np.maximum(0, value)
+    
+    @staticmethod
+   # @njit()
+    def d_relu(x):
+        return (x > 0).astype(float)
 
     @staticmethod
     @njit()
