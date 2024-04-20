@@ -8,7 +8,7 @@ def mse(y_true, y_pred):
     return np.mean((y_true - y_pred)**2)
 
 def d_mse(y_true, y_pred):
-    return 2 * (y_pred - y_true)# / y_true.size
+    return 2 * (y_pred - y_true)
 
 class Perceptron:
     def __init__(self, actvation, n_weights, weights=None):
@@ -26,9 +26,11 @@ class Perceptron:
         match actvation:
             case 'relu':
                 self.activation = Activation.relu
+                self.d_activation = Activation.d_relu
 
             case 'sigmoid':
                 self.activation = Activation.sigmoid
+                self.d_activation = Activation.d_sigmoid
 
             case 'tanh':
                 self.activation = Activation.tanh
@@ -41,15 +43,15 @@ class Perceptron:
 
     def process_input(self, inputs: ndarray) -> float:
         
-        self.last_input = np.array(inputs, dtype=np.float64)
-        self.soma = np.dot(self.weights, inputs)
+        self.last_input = np.array(inputs, dtype=np.float64)  # salva ultimo input
+        self.soma = np.dot(self.weights, inputs)        # salva resultado da função de transição
         
         return self.activation(self.soma)
     
     
     def compute_gradient(self, d_error):
     
-        return d_error * Activation.d_relu(self.soma) * self.last_input
+        return d_error * self.d_activation(self.soma) * self.last_input
 
 class MLP:
     def __init__(self, layers_size):
@@ -58,7 +60,7 @@ class MLP:
         for i in range(1, len(layers_size)):
             self.add_layer(n_inputs=layers_size[i-1], 
                            number_neurons=layers_size[i],
-                           activation='relu')
+                           activation='sigmoid')
 
     def forward(self, input_data):
         input_values = input_data.copy()  # Cria uma cópia da lista original
@@ -94,40 +96,12 @@ class MLP:
     def load_network(self, file_name):
         with open(file_name, 'rb') as f:
             self.network = pickle.load(f)
-
-    # def treinar(self, epochs, training_data, validation_data=None, learning_rate=1, parada_cedo=-1):
-    #     if validation_data is None:
-    #         validation_data = training_data
-    #     menor_erro = float('inf')
-    #     melhor_instancia = []  # salva a melhor instancia para caso de parada cedo
-
-    #     for epoch in range(epochs):
-    #         # treinar
-    #         erro = 2  # mudar erro para receber o erro do treino
-
-    #         print('Epoch {}/{}\t erro:{}'.format(epoch + 1, epochs, erro))
-
-    #         if parada_cedo != -1:
-    #             if menor_erro > erro:
-    #                 menor_erro = erro
-    #                 melhor_instancia = pickle.dumps(self.network)  # salva a melhor instancia
-
-    #             elif parada_cedo == 0:
-    #                 print("Numero maximo de interações sem melhoras atingido!\nInterações:{}"
-    #                       "\t erro:{} ".format(epoch, menor_erro))
-    #                 self.network = pickle.loads(melhor_instancia)  # carrega a melhor instancia
-
-    #             else:
-    #                 parada_cedo -= 1
- 
    
     def train(self, inputs, expected_output, learning_rate):
         # forward pass
         outputs = self.forward(inputs)
         
         print(f'Saída: {outputs}')
-        
-        #outputs = [1 if value > 0 else 0 for value in outputs]
         
         outputs = np.array(outputs)
 
@@ -143,7 +117,7 @@ class MLP:
             for j, neuron in enumerate(layer):
                 d_error = error[j]
                 gradients = neuron.compute_gradient(d_error)
-
+                
                 # Atualizar os pesos
                 neuron.weights += learning_rate * gradients
 
@@ -174,13 +148,13 @@ if __name__ == '__main__':
                       [0,1],
                       [1,0]]
     
-    for epoch in range(1,31):
+    for epoch in range(1,40):
         print(f"===================EPOCA {epoch}====================")
         
         for data, label in zip(inputs, expected_outputs):
             print(f'Input: {data}')
             print(f'Esperado: {label}')
-            nn.train(data, label, learning_rate=0.005)
+            nn.train(data, label, learning_rate=0.5)
             print()
 
     

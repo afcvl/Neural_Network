@@ -17,6 +17,10 @@ class Activation(object):
     @njit()
     def sigmoid(value):
         return 1 / (1 + np.exp(-value))
+    
+    @staticmethod
+    def d_sigmoid(value):
+        return Activation.sigmoid(value) *  (1 - Activation.sigmoid(value))
 
     @staticmethod
     @njit()
