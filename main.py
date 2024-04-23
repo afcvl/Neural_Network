@@ -4,6 +4,13 @@ from numpy import ndarray
 import pickle
 import time
 
+def letra_para_codigo(letra):
+    if 'A' <= letra <= 'Z':
+        return ord(letra) - 64
+    else:
+        print("Valor não reconhecido.")
+        return None
+
 def mse(y_true, y_pred):
     return np.mean((y_true - y_pred)**2)
 
@@ -68,7 +75,6 @@ class MLP:
         input_values = np.array(input_values, dtype=np.float64)
 
         for layer in self.network:  # itera sobre as camadas excluindo a de entrada
-   #         print(f'input: {input_values}')
             layer_output_values = []
 
             for neuron in layer:
@@ -76,9 +82,9 @@ class MLP:
             
             # seta input_values que será usado na proxima camada
             layer_output_values.append(1) # inserindo bias para proxima camada
-  #         print(f'Saída: {layer_output_values[:-1]}')
+            
             input_values = np.array(layer_output_values, dtype=np.float64)
-  #          print()
+  
         return layer_output_values[:-1] # Retira o bias da lista
 
     def add_layer(self, n_inputs, number_neurons, activation):
@@ -98,16 +104,14 @@ class MLP:
             self.network = pickle.load(f)
    
     def train(self, inputs, expected_output, learning_rate):
-        # forward pass
+        # feed forward
         outputs = self.forward(inputs)
         
-        print(f'Saída: {outputs}')
+       # print(f'Saída: {outputs}')
         
         outputs = np.array(outputs)
 
-        # Calcular o erro
         error = d_mse(outputs, expected_output)
-  #      print(error)
 
         # Backpropagation
         for i in reversed(range(len(self.network))):
@@ -118,7 +122,7 @@ class MLP:
                 d_error = error[j]
                 gradients = neuron.compute_gradient(d_error)
                 
-                # Atualizar os pesos
+                # Atualização dos pesos
                 neuron.weights += learning_rate * gradients
 
                 # Preparar o erro para a próxima camada
@@ -127,34 +131,60 @@ class MLP:
 
             error = next_error
 
-        return outputs, mse(expected_output, outputs[-1])
+        return outputs.tolist(), mse(expected_output, outputs[-1])
+    
+    
+def prepara_features(file):
+    inputs = []
+    features_txt = open(file, 'r')
+    for line in features_txt:
+        line= line.split(',')
+        line = [x.lstrip() for x in line]
+        inputs.append(line[:-1])
+        
+    return inputs
+
+def prepara_labels(file):
+    labels_txt = open(file, 'r')
+    
+    expected_outputs = []
+
+    lines = []
+    for line in labels_txt:
+        lines.append(line[:-1])
+        
+        expected_outputs.append(letra_para_codigo(line[:-1]))
+        
+    outputs_list = []
+
+    for cod in expected_outputs[:-1]:
+        outputs = [0] * len(set(expected_outputs))
+        outputs[cod] = 1
+
+        outputs_list.append(outputs)
+        
+    return outputs_list
     
     
 if __name__ == '__main__':
+        
+    inputs = prepara_features('CARACTERES COMPLETO\\X.txt')
     
-    values = [1, 2, 3, 4, 5]
-    
-    layers_size = [len(values), 20, 2]
+    expected_outputs = prepara_labels('CARACTERES COMPLETO\\Y_letra.txt')
+        
+    layers_size = [len(inputs[0]), 50, len(expected_outputs[0])]
 
     nn = MLP(layers_size)
     
-    inputs = [[1, 1, 1, 1, 1],
-              [0, 0, 0, 0, 0],
-              [0, 0, 0, 0, 0],
-              [1, 1, 1, 1, 1]]
-    
-    expected_outputs=[[1,0],
-                      [0,1],
-                      [0,1],
-                      [1,0]]
-    
-    for epoch in range(1,40):
+    for epoch in range(1,20):
         print(f"===================EPOCA {epoch}====================")
         
         for data, label in zip(inputs, expected_outputs):
-            print(f'Input: {data}')
-            print(f'Esperado: {label}')
-            nn.train(data, label, learning_rate=0.5)
-            print()
+            #print(f'Input: {data}')
+            saidas, erro = nn.train(data, label, learning_rate=0.2)
+            if epoch % 5 == 1: 
+                print(f'Esperado: {label}')
+                print(f'SAIDA: {saidas}')
+                print()
 
     
