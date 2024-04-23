@@ -26,6 +26,10 @@ class Activation(object):
     @njit()
     def tanh(value):
         return np.tanh(value)
+    
+    @staticmethod
+    def d_tanh(value):
+        return 1 - np.tanh(value)**2
 
     @staticmethod
     @jit(nopython=True)
