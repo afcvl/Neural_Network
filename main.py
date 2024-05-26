@@ -5,7 +5,6 @@ import pickle
 import time
 import matplotlib.pyplot as plt
 
-
 def letra_para_codigo(letra):
     if 'A' <= letra <= 'Z':
         return ord(letra) - 64
@@ -53,11 +52,11 @@ def d_mse(y_true, y_pred):   # derivada do erro quadratico médio
 class Perceptron:
     def __init__(self, actvation, n_weights, weights=None):
         self.n_weights = n_weights + 1   #adição do peso do bias
-        self.last_input = None
-        self.soma = 0
+        self.last_input = None    # para calculo do backpropagation
+        self.soma = 0         # para calculo do backpropagation
 
         if weights is None:
-            self.weights = (2 * np.random.rand(n_weights + 1).astype(np.float64)) - 1
+            self.weights = ((2 * np.random.rand(n_weights + 1).astype(np.float64)) - 1)/20
             # gera valores de parametros entre -1 e 1
         else:
             self.weights = weights
@@ -115,7 +114,7 @@ class MLP:
         input_values.append(1)
         input_values = np.array(input_values, dtype=np.float64)
 
-        for layer in self.network:  # itera sobre as camadas excluindo a de entrada
+        for layer in self.network:  
             layer_output_values = []
 
             for neuron in layer:
@@ -123,18 +122,9 @@ class MLP:
             
             # seta input_values que será usado na proxima camada
             layer_output_values.append(1) # inserindo bias para proxima camada
-            
             input_values = np.array(layer_output_values, dtype=np.float64)
   
         return layer_output_values[:-1] # Retira o bias da lista
-
-    def save_network(self, file_name):
-        with open(file_name, 'wb') as f:
-            pickle.dump(self.network, f)
-
-    def load_network(self, file_name):
-        with open(file_name, 'rb') as f:
-            self.network = pickle.load(f)
    
     def train_step(self, inputs, expected_output, learning_rate):
         # feed forward
@@ -142,7 +132,7 @@ class MLP:
         
         outputs = np.array(outputs)
 
-        error = d_mse(outputs, expected_output)
+        error = d_mse(outputs, expected_output)  # calcula derivada do erro para todos os outputs previamente
 
         # Backpropagation
         for i in reversed(range(len(self.network))):
@@ -151,7 +141,7 @@ class MLP:
 
             for j, neuron in enumerate(layer):
                 d_error = error[j]
-                gradients = neuron.compute_gradient(d_error)
+                gradients = neuron.compute_gradient(d_error)  
                 
                 # Preparar o erro para a próxima camada
                 if i != 0:
@@ -160,18 +150,26 @@ class MLP:
                 # Atualização dos pesos
                 neuron.weights += learning_rate * gradients
 
-
             error = next_error
 
         return outputs.tolist(), mse(expected_output, outputs[-1])
-    
+
+    def save_network(self, file_name):
+        with open(file_name, 'wb') as f:
+            pickle.dump(self.network, f)
+
+    def load_network(self, file_name):
+        with open(file_name, 'rb') as f:
+            self.network = pickle.load(f)  
     
 if __name__ == '__main__':
         
     inputs = prepara_entradas('CARACTERES COMPLETO\\X.txt')
     expected_outputs = prepara_saidas_esperadas('CARACTERES COMPLETO\\Y_letra.txt')
-        
-    layers_size = [len(inputs[0]), 45, len(expected_outputs[0])]
+    
+    resultados = []
+    
+    layers_size = [len(inputs[0]), 40, len(expected_outputs[0])]
 
     nn = MLP(layers_size, activation='sigmoid')
     
@@ -181,22 +179,29 @@ if __name__ == '__main__':
         
         total_error = 0
         for data, label in zip(inputs, expected_outputs):
-            #print(f'Input: {data}')
             
-            saidas, erro = nn.train_step(data, label, learning_rate=0.15)   # passo de treinamento (foward, backpropagation e alteração de pesos)
+            saidas, erro = nn.train_step(data, label, learning_rate=0.05)   # passo de treinamento (foward, backpropagation e alteração de pesos)
             total_error -= erro
             
             if epoch % 5 == 1: 
                 saidas = np.array(saidas)
                 label = np.array(label)
-                print(f'Esperado: {label.argmax()}')
-                print(f'SAIDA: {saidas.argmax()}')
-                print()
+                # print(f'Esperado: {label.argmax()}')
+                # print(f'SAIDA: {saidas.argmax()}')
+                # print()
                 
         print(f"Erro: {total_error}")
         
         error_history.append(total_error)
     
+    nn.save_network('network.nw')
+    
     fig, ax = plt.subplots()  # Cria gráfico do histórico de erro
-    line, = ax.plot(error_history)    
+    
+    ax.plot(error_history, label='train_error')
+        
+    ax.legend()
+        
+    # fig, ax = plt.subplots()  # Cria gráfico do histórico de erro
+    # line, = ax.plot(resultados)    
     plt.show()
