@@ -200,7 +200,10 @@ class MLP:
         
         return outputs.tolist(), mse(expected_output, outputs)
 
-    def train(self, train_inputs, train_outputs, epochs, learning_rate):
+    def train(self, train_inputs, train_outputs, epochs, learning_rate,early_stop = 0):
+        least_erro = float('inf')
+        best_epoch = 1 
+        best_network = []   # usado para salvar a rede da melhor epoch em ram
         error_history = []
         for epoch in range(1, epochs + 1):
             total_error = 0
@@ -214,9 +217,23 @@ class MLP:
                 # print(f'Esperado: {label.argmax()}')
                 # print(f'SAIDA: {saidas.argmax()}')
                 # print()
-
+            
+            #total_error+= epoch #usado para forçar a parada antecipada em teste
+            #print("!!!!!teste de parada antecipada!!!!!!) #usado para mostrar q está em teste, manter comentado ou descomentado junto com a linha de cima!
+                  
             print(f"Época {epoch} - Erro: {total_error}")
             error_history.append(total_error)
+
+            if early_stop !=0:
+                if least_erro < total_error:
+                    if best_epoch <= epoch - early_stop:
+                        print("Parada Antecipada!!! O menor erro foi na Época {} e o valor foi {}".format(best_epoch,least_erro))
+                        nn = pickle.loads(best_network)  # recupera a melhor rede neural da ram
+                        break;
+                else:
+                    least_erro = total_error
+                    best_epoch = epoch
+                    best_network = pickle.dumps(self.network) # salva a rede neural em ram
         
         return error_history
 
@@ -280,7 +297,7 @@ def validacao_cruzada(data, labels, k=6, epochs=100, learning_rate=0.01):
         mlp = MLP(layers_size0, 'sigmoid')
         
         # Treinar a rede neural
-        mlp.train(train_data, train_labels, epochs, learning_rate)
+        mlp.train(train_data, train_labels, epochs, learning_rate, early_stop = 5)
         
         # Validar a rede neural
         val_predictions = []
