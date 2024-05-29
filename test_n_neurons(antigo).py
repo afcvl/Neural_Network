@@ -136,34 +136,38 @@ class MLP:
         with open(file_name, 'rb') as f:
             self.network = pickle.load(f)
    
-    def train_step(self, inputs, expected_output, learning_rate):
+def train_step(self, inputs, expected_output, learning_rate):
         # feed forward
         outputs = self.forward(inputs)
         
         outputs = np.array(outputs)
 
-        error = d_mse(outputs, expected_output)
+        error = d_mse(outputs, expected_output)  # calcula derivada do erro para todos os outputs previamente
 
-        # Backpropagation
+        # Backpropagation e alteração de pesos
         for i in reversed(range(len(self.network))):
             layer = self.network[i]
             next_error = np.zeros_like(layer[0].weights)
 
             for j, neuron in enumerate(layer):
                 d_error = error[j]
-                gradients = neuron.compute_gradient(d_error)
+                gradients = neuron.compute_gradient(d_error)  
                 
-                # Preparar o erro para a próxima camada
+                # Salva os pesos antes de alterá-los e prepara para a proxima camada
                 if i != 0:
                     next_error += neuron.weights * d_error
                     
                 # Atualização dos pesos
                 neuron.weights += learning_rate * gradients
 
+            error = next_error  # erro total da rede preparado para a proxima camada
+            
+        # calcula a saída da rede após a alteração dos pesos    
+        outputs = self.forward(inputs)
+        
+        outputs = np.array(outputs)
 
-            error = next_error
-
-        return outputs.tolist(), mse(expected_output, outputs[-1])
+        return outputs, mse(expected_output, outputs)
     
     
 if __name__ == '__main__':
@@ -174,7 +178,7 @@ if __name__ == '__main__':
     resultados = []
     
     
-    n_neurons =[10,20,30,40,50,60,70,80]
+    n_neurons =[10,20,30,40,50,60,70]
     
     n_neurons_error = []
     
@@ -185,7 +189,7 @@ if __name__ == '__main__':
         nn = MLP(layers_size, activation='sigmoid')
         
         error_history = []
-        for epoch in range(1,50): 
+        for epoch in range(1,30): 
             print(f"===================EPOCA {epoch}  n_neurons:{i} ===================")
             
             total_error = 0
@@ -220,6 +224,6 @@ if __name__ == '__main__':
         
     ax.legend()
         
-    # fig, ax = plt.subplots()  # Cria gráfico do histórico de erro
-    # line, = ax.plot(resultados)    
+    fig, ax = plt.subplots()  # Cria gráfico do histórico de erro
+    line, = ax.plot(resultados)    
     plt.show()
