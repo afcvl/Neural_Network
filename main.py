@@ -231,7 +231,6 @@ class MLP:
             error_history.append(total_error)
 
             if validation:# Validar a rede neural
-                print("com validação")
                 val_predictions = []
                 for data in val_inputs:
                     prediction = self.forward(data)
@@ -251,7 +250,6 @@ class MLP:
             if early_stop !=0:#parada cedo
                 if (validation == True and validation_accuracy < best_accurary) or (validation == False and least_erro < total_error):
                     if best_epoch <= epoch - early_stop:
-                        print(best_epoch,epoch)
                         if validation:
                             print("Parada Antecipada!!! A melhor acuracia foi na Época {} e o valor foi {}".format(best_epoch,validation_accuracy))
                         else:
