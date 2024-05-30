@@ -200,8 +200,17 @@ class MLP:
         
         return outputs.tolist(), mse(expected_output, outputs)
 
-    def train(self, train_inputs, train_outputs, epochs, learning_rate):
+    def train(self, train_inputs, train_outputs, epochs, learning_rate, val_inputs = None,val_outpus = None, early_stop = 0):
+        least_erro = float('inf')
+        best_epoch = 1 
+        best_network =  pickle.dumps(self.network) # salva a rede neural em ram
         error_history = []
+        validation = False
+        validation_accuracy = 0
+        best_accurary = 0
+        if val_inputs !=None and val_outpus != None:
+            validation = True
+
         for epoch in range(1, epochs + 1):
             total_error = 0
             acertos = []
@@ -215,8 +224,45 @@ class MLP:
                 # print(f'SAIDA: {saidas.argmax()}')
                 # print()
 
-            print(f"Época {epoch} - Erro: {total_error}")
+            #total_error+= epoch #usado para forçar a parada antecipada em teste
+            #print("!!!!!teste de parada antecipada!!!!!!) #usado para mostrar q está em teste, manter comentado ou descomentado junto com a linha de cima!
+
             error_history.append(total_error)
+
+            if validation:# Validar a rede neural
+                val_predictions = []
+                for data in val_inputs:
+                    prediction = self.forward(data)
+                    val_predictions.append(prediction)
+
+                if len(val_outpus) != len(val_predictions):
+                    print(f"Erro: tamanhos incompatíveis. Labels: {len(val_outpus)}, Predictions: {len(val_predictions)}")
+                    continue
+                
+                validation_accuracy = accuracy(val_outpus, val_predictions)
+
+                #validation_accuracy -= 0.01 * epoch  #usado para força a parada cedo no caso de validação
+                #print("!!!!!teste de parada antecipada!!!!!!) #usado para mostrar q está em teste, manter comentado ou descomentado junto com a linha de cima!")
+                print(f"Época {epoch} - Erro: {total_error:.3f}  Acuracia: {validation_accuracy:.2f}")
+                
+                
+
+            if early_stop !=0:#parada cedo
+                if (validation == True and validation_accuracy < best_accurary) or (validation == False and least_erro < total_error):
+                    if best_epoch <= epoch - early_stop:
+                        print(best_epoch,epoch)
+                        if validation:
+                            print("Parada Antecipada!!! A melhor acuracia foi na Época {} e o valor foi {}".format(best_epoch,validation_accuracy))
+                        else:
+                            print("Parada Antecipada!!! O menor erro foi na Época {} e o valor foi {}".format(best_epoch,least_erro))
+                        self.network = pickle.loads(best_network)  # recupera a melhor rede neural da ram
+                        break;
+                else:
+                    least_erro = total_error
+                    best_accurary = validation_accuracy
+                    best_epoch = epoch
+                    best_network = pickle.dumps(self.network) # salva a rede neural em ram
+
         
         return error_history
 
@@ -246,7 +292,6 @@ def create_folds(data, labels, k=6):
         start_idx = end_idx
     
         print(f"Fold {i + 1}: {len(fold_data)} elementos")
-        
     
     return folds
 
@@ -280,7 +325,7 @@ def validacao_cruzada(data, labels, k=6, epochs=100, learning_rate=0.01):
         mlp = MLP(layers_size0, 'sigmoid')
         
         # Treinar a rede neural
-        mlp.train(train_data, train_labels, epochs, learning_rate)
+        mlp.train(train_data, train_labels, epochs, learning_rate, early_stop = 3, val_inputs = val_data , val_outpus = val_labels)
         
         # Validar a rede neural
         val_predictions = []
@@ -317,12 +362,12 @@ if __name__ == '__main__':
     
     #mean_accuracy = validacao_cruzada(inputs_train, outputs_train, k=4, epochs=30, learning_rate=0.05)
    
-    n_neurons = [20,30,40,50,60,70,80]
+    n_neurons = [140]#,30]#,40,50,60,70,80]
     result = []
     
     for i in n_neurons:    
         layers_size0 = [len(inputs_train[0]), i, len(outputs_train[0])]
-        mean_accuracy = validacao_cruzada(inputs_train, outputs_train, k=5, epochs=50, learning_rate=0.05)
+        mean_accuracy = validacao_cruzada(inputs_train, outputs_train, k=5, epochs=60, learning_rate=0.03)
         result.append(mean_accuracy)
     
     print()
@@ -354,5 +399,4 @@ if __name__ == '__main__':
     
     
         
-
 
