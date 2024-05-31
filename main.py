@@ -57,13 +57,13 @@ if __name__ == '__main__':
     inputs_train, test_inputs, outputs_train, test_outputs = separa_dados(inputs_train, outputs_train, num_test_samples)
 
     param_grid = [
-    {'hidden_layer': [50], 'activation': 'sigmoid', 'learning_rate': 0.05, 'epochs': 10},
-    {'hidden_layer': [150], 'activation': 'sigmoid', 'learning_rate': 0.005, 'epochs': 10},
+    {'hidden_layer': [50], 'activation': 'sigmoid', 'learning_rate': 0.05, 'epochs': 50},
+    {'hidden_layer': [150], 'activation': 'sigmoid', 'learning_rate': 0.005, 'epochs': 50},
     # Add more combinations as needed
     ]
 
     # Faz o grid_search para o treinamento da rede
-    results = grid_search(inputs_train, outputs_train, param_grid, early_stop=True, k_folds=3)
+    results = grid_search(inputs_train, outputs_train, param_grid, early_stop=True, k_folds=5)
     
     print()
     print('------------------- Resultado GridSeach ---------------------')
@@ -80,8 +80,8 @@ if __name__ == '__main__':
         
     mean_accuracy = mlp.fit_cross_validation(data=inputs_train,
                                                 labels=outputs_train,
-                                                n_folds=3,
-                                                lr=0.05,
+                                                n_folds=5,
+                                                lr=0.03,
                                                 max_epochs=40,
                                                 early_stop=True)
         
