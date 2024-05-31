@@ -1,7 +1,7 @@
 import numpy as np
 from numba import jit, njit
 
-
+#funções de ativação 
 class Activation(object):
     @staticmethod
     @njit()
@@ -9,7 +9,6 @@ class Activation(object):
         return np.maximum(0, value)
     
     @staticmethod
-   # @njit()
     def d_relu(x):
         return (x > 0).astype(float)
 
@@ -30,13 +29,3 @@ class Activation(object):
     @staticmethod
     def d_tanh(value):
         return 1 - np.tanh(value)**2
-
-    @staticmethod
-    @jit(nopython=True)
-    def linear(value):
-        return value
-
-
-
-if __name__ == "__main__":
-    print(Activation.relu(1.0))

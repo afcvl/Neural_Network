@@ -1,0 +1,5 @@
+- TO-DO
+    - matriz de confusão
+    - método .fit_holdout() (só tem o cross validation)
+    - alterar lógica da parada antecipada
+    - salvar a rede treinada em memória
