@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from data_manipulation import *
 from Neural_Network import MLP
 
-def grid_search(train_inputs, train_outputs, param_grid, early_stop, k_folds=5):
+def grid_search(train_inputs, train_outputs, param_grid, early_stop_epochs = 0, k_folds=5):
     best_accuracy = 0
     best_params = None
     results = []
@@ -22,7 +22,7 @@ def grid_search(train_inputs, train_outputs, param_grid, early_stop, k_folds=5):
         network = MLP(layers_size, activation)
 
         # Perform k-fold cross-validation
-        mean_accuracy = network.fit_cross_validation(train_inputs, train_outputs, k_folds, learning_rate, max_epochs, early_stop)
+        mean_accuracy = network.fit_cross_validation(train_inputs, train_outputs, k_folds, learning_rate, max_epochs,early_stop_epochs)
 
         results.append({
             'params': params,
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     ]
 
     # Faz o grid_search para o treinamento da rede
-    results = grid_search(inputs_train, outputs_train, param_grid, early_stop=True, k_folds=5)
+    results = grid_search(inputs_train, outputs_train, param_grid, early_stop_epochs=5, k_folds=5)
     
     print()
     print('------------------- Resultado GridSeach ---------------------')
@@ -83,7 +83,7 @@ if __name__ == '__main__':
                                                 n_folds=5,
                                                 lr=0.03,
                                                 max_epochs=40,
-                                                early_stop=True)
+                                                early_stop_epochs=5)
         
     # testa a rede nos dados de teste separados inicialmente
     cont = 0
@@ -96,4 +96,3 @@ if __name__ == '__main__':
     
     print()
     print(f'Acuracia conjuto de testes: {cont/len(test_inputs)}')
-        

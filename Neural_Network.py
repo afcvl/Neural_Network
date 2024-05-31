@@ -177,11 +177,14 @@ class MLP:
         #retorna a saída da rede e o erro
         return outputs.tolist(), mse(expected_output, outputs)
     
-    def train(self, train_inputs, train_outputs, val_data, val_labels, epochs, learning_rate, early_stop = 0):
+    def train(self, train_inputs, train_outputs, val_data, val_labels, epochs, learning_rate, early_stop_epochs = 0, early_learning_stop = 0):
         validation_accuracy = 0
         train_error_history = []
         val_error_history = []
         val_accuracy_history = []
+
+        best_epoch = 0
+        best_accuracy = 0
 
         for epoch in range(1, epochs + 1):
             total_train_error = 0
@@ -224,21 +227,25 @@ class MLP:
             
             val_accuracy_history.append(validation_accuracy)
 
-            print(f"Epoca {epoch} || Erro treino: {total_train_error:.5f} || Erro validacao: {val_error:.5f} || Acuracia: {validation_accuracy:.2f}")
+            print(f"Epoca {epoch} || Erro treino: {total_train_error:.5f} || Erro validacao: {val_error:.5f} || Acuracia: {validation_accuracy:.4f}")
 
             # PARADA ANTECIPADA
-            if early_stop:
-                try:
-                    if validation_accuracy < val_accuracy_history[-5]*1.002:
-                                print(f"Parada Antecipada!!! A melhor acuracia foi na Época {epoch-3} e o valor foi {val_accuracy_history[-3]}")
-                                return train_error_history, val_error_history
-                except:
-                    pass
+            if early_stop_epochs > 0:
 
-        
+                if validation_accuracy >= best_accuracy:
+                    best_epoch = epoch
+                    best_accuracy = validation_accuracy
+                    self._save_best()
+
+                elif epoch >= best_epoch + early_stop_epochs:
+                    self._load_best()
+                    print("Parada Antecipada!!!! Melhor Epoca foi a {}".format(best_epoch,best_accuracy))
+                    break
+
+        self._clear__copy()
         return train_error_history, val_error_history
     
-    def fit_cross_validation(self, data, labels, n_folds, lr, max_epochs=200, early_stop=True):
+    def fit_cross_validation(self, data, labels, n_folds, lr, max_epochs=200, early_stop_epochs = 0):
         
         folds = create_folds(data, labels, n_folds)
         
@@ -264,7 +271,7 @@ class MLP:
             # Treinar a rede neural
             # Faz o treinamento passando pelas épocas e retorna o histórico do erro do conjutno de treino e do
             # conjunto de validação
-            train_error_history, val_error_history = self.train(train_data, train_labels, val_data, val_labels, max_epochs, lr, early_stop)
+            train_error_history, val_error_history = self.train(train_data, train_labels, val_data, val_labels, max_epochs, lr, early_stop_epochs)
         
             # Aplica a rede treinada no fold de validação
             val_predictions = []
@@ -298,3 +305,12 @@ class MLP:
     def load_network(self, file_name):
         with open(file_name, 'rb') as f:
             self.network = pickle.load(f)  
+    
+    def _save_best(self):
+        self._copy = pickle.dumps(self.network)
+
+    def _load_best(self):
+        self.network = pickle.loads(self._copy)
+
+    def _clear__copy(self):
+        del self._copy
