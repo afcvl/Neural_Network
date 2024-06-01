@@ -75,7 +75,7 @@ class Perceptron:
 
     def process_input(self, inputs: ndarray) -> float:
         
-        self.last_input = np.array(inputs, dtype=np.float64)  # salva ultimo input
+        self.last_input = np.array(inputs, dtype=np.float64)  # Salva ultimo input
         self.soma = np.dot(self.weights, inputs)  #  Calcula a soma ponderada e salva resultado da função de transição  
         
         return self.activation(self.soma) #  Aplica a função de ativação na soma ponderada 
@@ -295,6 +295,57 @@ class MLP:
         print(f"Acurácia média da validação cruzada média: {mean_cross_val_accuracy * 100:.2f}%")
 
         return mean_cross_val_accuracy
+    
+# Método .fit_holdout()
+    
+    def fit_holdout(self, data, labels, test_size=0.33, epochs=50, learning_rate=0.01, early_stop_epochs=0):
+        
+        # Separa os dados de treinamento e de teste (de forma aleatória), sendo 2/3 dados de treinamento e 1/3 dados de teste
+        num_samples = len(data)
+        indices = np.random.permutation(num_samples)
+        test_set_size = int(num_samples * test_size)
+
+        # Divide os índices dos dados em conjuntos de índices de teste e índices de treinamento
+        # Seleciona os primeiros 'test_set_size' índices para o conjunto de teste
+        test_indices = indices[:test_set_size]
+
+        # Seleciona os índices restantes para o conjunto de treinamento
+        train_indices = indices[test_set_size:]
+
+        # Divide os dados e rótulos em conjuntos de treinamento e teste com base nos índices gerados aleatoriamente
+        # Seleciona os dados de treinamento e rótulos de treinamento com base nos índices de treinamento
+        train_data = [data[i] for i in train_indices]
+        train_labels = [labels[i] for i in train_indices]
+        test_data = [data[i] for i in test_indices]
+        test_labels = [labels[i] for i in test_indices]
+
+        # Treina a rede neural
+        self.train(train_data, train_labels, test_data, test_labels, epochs, learning_rate, early_stop_epochs)
+
+        # Realiza predições para cada amostra nos dados de teste
+        test_predictions = [self.forward(data) for data in test_data]
+        
+        # Calcula a acurácia 
+        test_accuracy = accuracy(test_labels, test_predictions)
+        print(f"Acurácia no conjunto de teste: {test_accuracy * 100:.2f}%")
+
+        return test_accuracy
+
+    def fit_random_sampling(self, data, labels, test_size=0.33, epochs=50, learning_rate=0.01, k=10, early_stop_epochs=0):
+        accuracies = []
+        
+        # Para cada iteração, realiza um holdout. 
+        # É importante realizar o holdout diversas vezes para testar a validação com diferentes conjuntos de dados gerados aleatoriamente
+        for i in range(k):
+            print(f"Repetição {i+1}/{k}")
+            accuracy = self.fit_holdout(data=data, labels=labels, test_size=test_size, epochs=epochs, learning_rate=learning_rate, early_stop_epochs=early_stop_epochs)
+            accuracies.append(accuracy)
+
+        # Retorna a média de todos as rodadas de holdout realizadas
+        mean_accuracy = np.mean(accuracies)
+        print(f"Acurácia média após {k} repetições: {mean_accuracy * 100:.2f}%")
+
+        return mean_accuracy
 
 # Salva o estado atual da rede neural (os pesos, a estrutura da rede, etc.) em um arquivo
     def save_network(self, file_name):
