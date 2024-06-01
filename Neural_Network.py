@@ -37,9 +37,15 @@ def create_folds(data, labels, k=6):
     return folds
 
 def accuracy(y_true, y_pred):
+    # Calcula o número de previsões corretas comparando os índices do valor máximo (classe prevista) em cada amostra
     correct = np.sum(np.argmax(y_true, axis=1) == np.argmax(y_pred, axis=1))
+    
+    # Calcula o número total de amostras
     total = len(y_true)
+    
+    # Retorna a proporção de previsões corretas (acurácia)
     return correct / total
+
 
 #Classe que define o Neurônio
 class Perceptron:
@@ -283,16 +289,16 @@ class MLP:
             fold_accuracy = accuracy(val_labels, val_predictions)
             all_val_accuracies.append(fold_accuracy)
             
-            # Verifique se o número de rótulos de validação e previsões é igual
+            # Verificar se o número de rótulos de validação e previsões é igual
             if len(val_labels) != len(val_predictions):
-                print(f"Erro: tamanhos incompatíveis. Labels: {len(val_labels)}, Predictions: {len(val_predictions)}")
+                print(f"Erro: tamanhos incompativeis. Labels: {len(val_labels)}, Predictions: {len(val_predictions)}")
                 return
             
-            print(f"Acurácia de validação no fold {valid_fold + 1}: {fold_accuracy * 100:.2f}%")
+            print(f"Acuracia de validação no fold {valid_fold + 1}: {fold_accuracy * 100:.2f}%")
     
         # Calcula a média da acurácia de validação sobre todos os folds
         mean_cross_val_accuracy = np.mean(all_val_accuracies)
-        print(f"Acurácia média da validação cruzada média: {mean_cross_val_accuracy * 100:.2f}%")
+        print(f"Acuracia media da validacao cruzada: {mean_cross_val_accuracy * 100:.2f}%")
 
         return mean_cross_val_accuracy
     
@@ -327,7 +333,7 @@ class MLP:
         
         # Calcula a acurácia 
         test_accuracy = accuracy(test_labels, test_predictions)
-        print(f"Acurácia no conjunto de teste: {test_accuracy * 100:.2f}%")
+        print(f"Acuracia no conjunto de teste: {test_accuracy * 100:.2f}%")
 
         return test_accuracy
 
@@ -337,13 +343,13 @@ class MLP:
         # Para cada iteração, realiza um holdout. 
         # É importante realizar o holdout diversas vezes para testar a validação com diferentes conjuntos de dados gerados aleatoriamente
         for i in range(k):
-            print(f"Repetição {i+1}/{k}")
+            print(f"Repeticao {i+1}/{k}")
             accuracy = self.fit_holdout(data=data, labels=labels, test_size=test_size, epochs=epochs, learning_rate=learning_rate, early_stop_epochs=early_stop_epochs)
             accuracies.append(accuracy)
 
         # Retorna a média de todos as rodadas de holdout realizadas
         mean_accuracy = np.mean(accuracies)
-        print(f"Acurácia média após {k} repetições: {mean_accuracy * 100:.2f}%")
+        print(f"Acuracia media apos {k} repeticoes: {mean_accuracy * 100:.2f}%")
 
         return mean_accuracy
 
