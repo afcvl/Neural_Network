@@ -66,7 +66,7 @@ if __name__ == '__main__':
    
     # =================== Treina rede com cross validation =============== 
     print('------------------ CROSS VALIDATION SIMPLES -------------')
-    layers_size = [len(inputs_train[0]), 50, len(outputs_train[0])]
+    layers_size = [len(inputs_train[0]), 200, len(outputs_train[0])]
         
     mlp_cv = MLP(layers_size, 'sigmoid')
         
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     # =================== Treina rede com holdout e random sampling =============== 
 
-    # layers_size = [len(inputs_train_complete[0]), 50, len(outputs_train_complete[0])]
+    # layers_size = [len(inputs_train_complete[0]), 200, len(outputs_train_complete[0])]
         
     # mlp_h = MLP(layers_size, 'sigmoid')
     
