@@ -11,11 +11,21 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 
 def plot_confusion_matrix(y_true, y_pred, title):
+    # Importa a função confusion_matrix da biblioteca sklearn.metrics
+    from sklearn.metrics import confusion_matrix
+    # Cria a matriz de confusão comparando os valores verdadeiros (y_true) e os valores previstos (y_pred)
     cm = confusion_matrix(y_true, y_pred)
+    # Importa ConfusionMatrixDisplay da biblioteca sklearn.metrics
+    from sklearn.metrics import ConfusionMatrixDisplay
+    # Cria um objeto para exibir a matriz de confusão
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    # Plota a matriz de confusão usando uma paleta de cores azuis
     disp.plot(cmap=plt.cm.Blues)
+    # Adiciona um título ao gráfico
     plt.title(title)
+    # Exibe o gráfico
     plt.show()
+
 
 if __name__ == '__main__':
 
@@ -63,7 +73,7 @@ if __name__ == '__main__':
     mean_accuracy = mlp_cv.fit_cross_validation(data=inputs_train,
                                                 labels=outputs_train,
                                                 n_folds=5,
-                                                lr=0.03,
+                                                lr=0.05,
                                                 max_epochs=40,
                                                 early_stop_epochs=5)
 
@@ -82,7 +92,7 @@ if __name__ == '__main__':
         if pred.argmax() ==  label.argmax():
             cont += 1
     
-    plot_confusion_matrix(y_true_cv, y_pred_cv, "Matriz de Confusão -  Modelo com Cross Validation")
+    # plot_confusion_matrix(y_true_cv, y_pred_cv, "Matriz de Confusão -  Modelo com Cross Validation")
 
     # print()
     # print(f'Acuracia conjuto de testes: {cont/len(test_inputs)}')
@@ -90,5 +100,28 @@ if __name__ == '__main__':
     # =================== Treina rede com holdout e random sampling =============== 
 
     # layers_size = [len(inputs_train_complete[0]), 50, len(outputs_train_complete[0])]
+        
+    # mlp_h = MLP(layers_size, 'sigmoid')
+    
+    # # Random Sampling 
+    # print('------------------ HOLDOUT E RANDOM SAMPLING -------------')
+    # mlp_h.fit_random_sampling(inputs_train, outputs_train, test_size=0.33, epochs=50, learning_rate=0.05, k=10, early_stop_epochs=10)
+
+    #  # # testa a rede nos dados de teste separados inicialmente
+    # y_true_h = []
+    # y_pred_h = []
+    # cont = 0
+    # for data, label in zip(test_inputs, test_outputs):
+    #     pred = mlp_h.forward(data)
+    #     pred = np.array(pred)
+    #     label = np.array(label)
+    #     y_true_h.append(label.argmax())
+    #     y_pred_h.append(pred.argmax())
+    #     if pred.argmax() ==  label.argmax():
+    #         cont += 1
+
+    # print()
+
+    # plot_confusion_matrix(y_true_h, y_pred_h, "Confusion Matrix - Holdout Model")
 
     # print(f'Acuracia conjuto de testes: {cont/len(test_inputs)}')
