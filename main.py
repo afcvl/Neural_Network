@@ -38,7 +38,6 @@ def grid_search(train_inputs, train_outputs, param_grid, early_stop, k_folds=5):
 
     return results
 
-
 if __name__ == '__main__':
 
     #  Cenário 0: MLP crua, sem validação e otimização dos parâmetros (valores aleatórios)
@@ -69,8 +68,6 @@ if __name__ == '__main__':
     print('------------------- Resultado GridSeach ---------------------')
     pprint(results)
     print()
-    
-   
    
     # =================== Treina rede com cross validation =============== 
     print('------------------ CROSS VALIDATION SIMPLES -------------')
