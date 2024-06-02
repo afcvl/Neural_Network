@@ -37,9 +37,15 @@ def create_folds(data, labels, k=6):
     return folds
 
 def accuracy(y_true, y_pred):
+    # Calcula o número de previsões corretas comparando os índices do valor máximo (classe prevista) em cada amostra
     correct = np.sum(np.argmax(y_true, axis=1) == np.argmax(y_pred, axis=1))
+    
+    # Calcula o número total de amostras
     total = len(y_true)
+    
+    # Retorna a proporção de previsões corretas (acurácia)
     return correct / total
+
 
 #Classe que define o Neurônio
 class Perceptron:
@@ -75,7 +81,7 @@ class Perceptron:
 
     def process_input(self, inputs: ndarray) -> float:
         
-        self.last_input = np.array(inputs, dtype=np.float64)  # salva ultimo input
+        self.last_input = np.array(inputs, dtype=np.float64)  # Salva ultimo input
         self.soma = np.dot(self.weights, inputs)  #  Calcula a soma ponderada e salva resultado da função de transição  
         
         return self.activation(self.soma) #  Aplica a função de ativação na soma ponderada 
@@ -177,11 +183,14 @@ class MLP:
         #retorna a saída da rede e o erro
         return outputs.tolist(), mse(expected_output, outputs)
     
-    def train(self, train_inputs, train_outputs, val_data, val_labels, epochs, learning_rate, early_stop = 0):
+    def train(self, train_inputs, train_outputs, val_data, val_labels, epochs, learning_rate, early_stop_epochs = 0, early_learning_stop = 0):
         validation_accuracy = 0
         train_error_history = []
         val_error_history = []
         val_accuracy_history = []
+
+        best_epoch = 0
+        best_accuracy = 0
 
         for epoch in range(1, epochs + 1):
             total_train_error = 0
@@ -224,21 +233,25 @@ class MLP:
             
             val_accuracy_history.append(validation_accuracy)
 
-            print(f"Epoca {epoch} || Erro treino: {total_train_error:.5f} || Erro validacao: {val_error:.5f} || Acuracia: {validation_accuracy:.2f}")
+            print(f"Epoca {epoch} || Erro treino: {total_train_error:.5f} || Erro validacao: {val_error:.5f} || Acuracia: {validation_accuracy:.4f}")
 
             # PARADA ANTECIPADA
-            if early_stop:
-                try:
-                    if validation_accuracy < val_accuracy_history[-5]*1.002:
-                                print(f"Parada Antecipada!!! A melhor acuracia foi na Época {epoch-3} e o valor foi {val_accuracy_history[-3]}")
-                                return train_error_history, val_error_history
-                except:
-                    pass
+            if early_stop_epochs > 0:
 
-        
+                if validation_accuracy >= best_accuracy:
+                    best_epoch = epoch
+                    best_accuracy = validation_accuracy
+                    self._save_best()
+
+                elif epoch >= best_epoch + early_stop_epochs:
+                    self._load_best()
+                    print("Parada Antecipada!!!! Melhor Epoca foi a {}".format(best_epoch,best_accuracy))
+                    break
+
+        self._clear__copy()
         return train_error_history, val_error_history
     
-    def fit_cross_validation(self, data, labels, n_folds, lr, max_epochs=200, early_stop=True):
+    def fit_cross_validation(self, data, labels, n_folds, lr, max_epochs=200, early_stop_epochs = 0):
         
         folds = create_folds(data, labels, n_folds)
         
@@ -264,7 +277,7 @@ class MLP:
             # Treinar a rede neural
             # Faz o treinamento passando pelas épocas e retorna o histórico do erro do conjutno de treino e do
             # conjunto de validação
-            train_error_history, val_error_history = self.train(train_data, train_labels, val_data, val_labels, max_epochs, lr, early_stop)
+            train_error_history, val_error_history = self.train(train_data, train_labels, val_data, val_labels, max_epochs, lr, early_stop_epochs)
         
             # Aplica a rede treinada no fold de validação
             val_predictions = []
@@ -276,18 +289,69 @@ class MLP:
             fold_accuracy = accuracy(val_labels, val_predictions)
             all_val_accuracies.append(fold_accuracy)
             
-            # Verifique se o número de rótulos de validação e previsões é igual
+            # Verificar se o número de rótulos de validação e previsões é igual
             if len(val_labels) != len(val_predictions):
-                print(f"Erro: tamanhos incompatíveis. Labels: {len(val_labels)}, Predictions: {len(val_predictions)}")
+                print(f"Erro: tamanhos incompativeis. Labels: {len(val_labels)}, Predictions: {len(val_predictions)}")
                 return
             
-            print(f"Acurácia de validação no fold {valid_fold + 1}: {fold_accuracy * 100:.2f}%")
+            print(f"Acuracia de validação no fold {valid_fold + 1}: {fold_accuracy * 100:.2f}%")
     
         # Calcula a média da acurácia de validação sobre todos os folds
         mean_cross_val_accuracy = np.mean(all_val_accuracies)
-        print(f"Acurácia média da validação cruzada média: {mean_cross_val_accuracy * 100:.2f}%")
+        print(f"Acuracia media da validacao cruzada: {mean_cross_val_accuracy * 100:.2f}%")
 
         return mean_cross_val_accuracy
+    
+# Método .fit_holdout()
+    
+    def fit_holdout(self, data, labels, test_size=0.33, epochs=50, learning_rate=0.01, early_stop_epochs=0):
+        
+        # Separa os dados de treinamento e de teste (de forma aleatória), sendo 2/3 dados de treinamento e 1/3 dados de teste
+        num_samples = len(data)
+        indices = np.random.permutation(num_samples)
+        test_set_size = int(num_samples * test_size)
+
+        # Divide os índices dos dados em conjuntos de índices de teste e índices de treinamento
+        # Seleciona os primeiros 'test_set_size' índices para o conjunto de teste
+        test_indices = indices[:test_set_size]
+
+        # Seleciona os índices restantes para o conjunto de treinamento
+        train_indices = indices[test_set_size:]
+
+        # Divide os dados e rótulos em conjuntos de treinamento e teste com base nos índices gerados aleatoriamente
+        # Seleciona os dados de treinamento e rótulos de treinamento com base nos índices de treinamento
+        train_data = [data[i] for i in train_indices]
+        train_labels = [labels[i] for i in train_indices]
+        test_data = [data[i] for i in test_indices]
+        test_labels = [labels[i] for i in test_indices]
+
+        # Treina a rede neural
+        self.train(train_data, train_labels, test_data, test_labels, epochs, learning_rate, early_stop_epochs)
+
+        # Realiza predições para cada amostra nos dados de teste
+        test_predictions = [self.forward(data) for data in test_data]
+        
+        # Calcula a acurácia 
+        test_accuracy = accuracy(test_labels, test_predictions)
+        print(f"Acuracia no conjunto de teste: {test_accuracy * 100:.2f}%")
+
+        return test_accuracy
+
+    def fit_random_sampling(self, data, labels, test_size=0.33, epochs=50, learning_rate=0.01, k=10, early_stop_epochs=0):
+        accuracies = []
+        
+        # Para cada iteração, realiza um holdout. 
+        # É importante realizar o holdout diversas vezes para testar a validação com diferentes conjuntos de dados gerados aleatoriamente
+        for i in range(k):
+            print(f"Repeticao {i+1}/{k}")
+            accuracy = self.fit_holdout(data=data, labels=labels, test_size=test_size, epochs=epochs, learning_rate=learning_rate, early_stop_epochs=early_stop_epochs)
+            accuracies.append(accuracy)
+
+        # Retorna a média de todos as rodadas de holdout realizadas
+        mean_accuracy = np.mean(accuracies)
+        print(f"Acuracia media apos {k} repeticoes: {mean_accuracy * 100:.2f}%")
+
+        return mean_accuracy
 
 # Salva o estado atual da rede neural (os pesos, a estrutura da rede, etc.) em um arquivo
     def save_network(self, file_name):
@@ -298,3 +362,12 @@ class MLP:
     def load_network(self, file_name):
         with open(file_name, 'rb') as f:
             self.network = pickle.load(f)  
+    
+    def _save_best(self):
+        self._copy = pickle.dumps(self.network)
+
+    def _load_best(self):
+        self.network = pickle.loads(self._copy)
+
+    def _clear__copy(self):
+        del self._copy
