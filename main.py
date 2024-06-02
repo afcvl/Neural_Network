@@ -1,43 +1,14 @@
 import numpy as np
 from pprint import pprint
 import time
+import pandas as pd
+import pickle
 import matplotlib.pyplot as plt
 from data_manipulation import *
 from Neural_Network import MLP
+from grid_search import *
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
-def grid_search(train_inputs, train_outputs, param_grid, early_stop_epochs = 0, k_folds=5):
-    best_accuracy = 0
-    best_params = None
-    results = []
-
-    for params in param_grid:
-        layers_size = [len(train_inputs[0])] + params['hidden_layer'] + [len(train_outputs[0])]
-        activation = params['activation']
-        learning_rate = params['learning_rate']
-        max_epochs = params['epochs']
-        
-        print("Traeinando com os parâmetros: ")
-        pprint(params)
-        
-        network = MLP(layers_size, activation)
-
-        # Perform k-fold cross-validation
-        mean_accuracy = network.fit_cross_validation(train_inputs, train_outputs, k_folds, learning_rate, max_epochs,early_stop_epochs)
-
-        results.append({
-            'params': params,
-            'mean_accuracy': mean_accuracy
-        })
-
-        if mean_accuracy > best_accuracy:
-            best_accuracy = mean_accuracy
-            best_params = params
-
-    print(f"Best parameters: {best_params}")
-    print(f"Best cross-validation accuracy: {best_accuracy * 100:.2f}%")
-
-    return results
 
 def plot_confusion_matrix(y_true, y_pred, title):
     cm = confusion_matrix(y_true, y_pred)
@@ -45,7 +16,6 @@ def plot_confusion_matrix(y_true, y_pred, title):
     disp.plot(cmap=plt.cm.Blues)
     plt.title(title)
     plt.show()
-
 
 if __name__ == '__main__':
 
@@ -67,19 +37,20 @@ if __name__ == '__main__':
     num_test_samples = 130
     inputs_train, test_inputs, outputs_train, test_outputs = separa_dados(inputs_train, outputs_train, num_test_samples)
 
-    # param_grid = [
-    # {'hidden_layer': [50], 'activation': 'sigmoid', 'learning_rate': 0.05, 'epochs': 50},
-    # {'hidden_layer': [150], 'activation': 'sigmoid', 'learning_rate': 0.005, 'epochs': 50},
-    # # Add more combinations as needed
-    # ]
+    param_grid = [
+    {'hidden_layer': [50], 'activation': 'sigmoid', 'learning_rate': 0.05, 'epochs': 50},
+    {'hidden_layer': [100], 'activation': 'sigmoid', 'learning_rate': 0.001, 'epochs': 70},
+    {'hidden_layer': [150], 'activation': 'sigmoid', 'learning_rate': 0.01, 'epochs': 90},
+    {'hidden_layer': [200], 'activation': 'sigmoid', 'learning_rate': 0.005, 'epochs': 100},
+    ]
 
-    # # Faz o grid_search para o treinamento da rede
-    # results = grid_search(inputs_train, outputs_train, param_grid, early_stop_epochs=5, k_folds=5)
+
+    # Realiza o grid_search para o treinamento da rede
+    results = grid_search(inputs_train, outputs_train, param_grid, early_stop_epochs=5, k_folds=5)
     
-    # print()
-    # print('------------------- Resultado GridSeach ---------------------')
-    # pprint(results)
-    # print()
+    print()
+    print('------------------- Resultado Grid Search ---------------------')
+    print_grid_search_results(results)
     
    
     # # =================== Treina rede com cross validation =============== 
@@ -117,29 +88,29 @@ if __name__ == '__main__':
 
     # =================== Treina rede com holdout e random sampling =============== 
 
-    layers_size = [len(inputs_train_complete[0]), 50, len(outputs_train_complete[0])]
+    # layers_size = [len(inputs_train_complete[0]), 50, len(outputs_train_complete[0])]
         
-    mlp_h = MLP(layers_size, 'sigmoid')
+    # mlp_h = MLP(layers_size, 'sigmoid')
     
-    # Random Sampling 
-    print('------------------ HOLDOUT E RANDOM SAMPLING -------------')
-    mlp_h.fit_random_sampling(inputs_train, outputs_train, test_size=0.33, epochs=50, learning_rate=0.01, k=10, early_stop_epochs=10)
+    # # Random Sampling 
+    # print('------------------ HOLDOUT E RANDOM SAMPLING -------------')
+    # mlp_h.fit_random_sampling(inputs_train, outputs_train, test_size=0.33, epochs=50, learning_rate=0.01, k=10, early_stop_epochs=10)
 
-     # # testa a rede nos dados de teste separados inicialmente
-    y_true_h = []
-    y_pred_h = []
-    cont = 0
-    for data, label in zip(test_inputs, test_outputs):
-        pred = mlp_h.forward(data)
-        pred = np.array(pred)
-        label = np.array(label)
-        y_true_h.append(label.argmax())
-        y_pred_h.append(pred.argmax())
-        if pred.argmax() ==  label.argmax():
-            cont += 1
+    #  # # testa a rede nos dados de teste separados inicialmente
+    # y_true_h = []
+    # y_pred_h = []
+    # cont = 0
+    # for data, label in zip(test_inputs, test_outputs):
+    #     pred = mlp_h.forward(data)
+    #     pred = np.array(pred)
+    #     label = np.array(label)
+    #     y_true_h.append(label.argmax())
+    #     y_pred_h.append(pred.argmax())
+    #     if pred.argmax() ==  label.argmax():
+    #         cont += 1
 
-    print()
+    # print()
 
-    plot_confusion_matrix(y_true_h, y_pred_h, "Confusion Matrix - Holdout Model")
+    # plot_confusion_matrix(y_true_h, y_pred_h, "Confusion Matrix - Holdout Model")
 
-    print(f'Acuracia conjuto de testes: {cont/len(test_inputs)}')
+    # print(f'Acuracia conjuto de testes: {cont/len(test_inputs)}')
