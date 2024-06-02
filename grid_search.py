@@ -13,6 +13,7 @@ def grid_search(train_inputs, train_outputs, param_grid, early_stop_epochs=0, k_
     best_params = None
     results = []
 
+    # Loop pelos diferentes conjuntos de parâmetros na grade de parâmetros
     for params in param_grid:
         layers_size = [len(train_inputs[0])] + params['hidden_layer'] + [len(train_outputs[0])]
         activation = params['activation']
@@ -26,7 +27,8 @@ def grid_search(train_inputs, train_outputs, param_grid, early_stop_epochs=0, k_
 
         # Realiza a validação cruzada k-fold
         mean_accuracy = network.fit_cross_validation(train_inputs, train_outputs, k_folds, learning_rate, max_epochs, early_stop_epochs)
-
+        
+        # Armazena os resultados da validação cruzada
         results.append({
             'hidden_layer': str(params['hidden_layer']),
             'activation': activation,
@@ -35,6 +37,7 @@ def grid_search(train_inputs, train_outputs, param_grid, early_stop_epochs=0, k_
             'mean_accuracy': mean_accuracy
         })
 
+         # Atualiza os melhores parâmetros e a melhor acurácia, se necessário
         if mean_accuracy > best_accuracy:
             best_accuracy = mean_accuracy
             best_params = params

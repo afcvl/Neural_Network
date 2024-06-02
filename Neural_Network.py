@@ -17,24 +17,25 @@ def mse(y_true, y_pred):
 def d_mse(y_true, y_pred):  
     return 2 * (y_pred - y_true)
 
-def create_folds(data, labels, k=6):
-    num_samples = len(data)
-    fold_size = num_samples // k
-    remainder = num_samples % k
+def create_folds(data, labels, k=6): 
+    num_samples = len(data)  # Calcula o número total de amostras no conjunto de dados.
+    fold_size = num_samples // k  # Determina o tamanho de cada fold dividindo o número total de amostras pelo número de folds.
+    remainder = num_samples % k  # Calcula o restante da divisão para distribuir igualmente as amostras nos folds.
     
-    folds = []
-    start_idx = 0
-    
-    for i in range(k):
-        end_idx = start_idx + fold_size + (1 if i < remainder else 0)  # Adiciona 1 aos primeiros 'remainder' folds
-        fold_data = data[start_idx:end_idx]
-        fold_labels = labels[start_idx:end_idx]
-        folds.append((fold_data, fold_labels))
-        start_idx = end_idx
-    
-        print(f"Fold {i + 1}: {len(fold_data)} elementos")
-    
-    return folds
+    folds = []  # Inicializa uma lista vazia para armazenar os folds.
+    start_idx = 0  # Define o índice inicial para a primeira divisão.
+
+    for i in range(k):  # Loop para criar cada um dos k folds.
+        end_idx = start_idx + fold_size + (1 if i < remainder else 0)  # Calcula o índice final do fold atual, adicionando 1 aos primeiros 'remainder' folds para distribuir igualmente as amostras.
+        fold_data = data[start_idx:end_idx]  # Seleciona os dados para o fold atual.
+        fold_labels = labels[start_idx:end_idx]  # Seleciona as etiquetas correspondentes para o fold atual.
+        folds.append((fold_data, fold_labels))  # Adiciona o fold atual (dados e etiquetas) à lista de folds.
+        start_idx = end_idx  # Atualiza o índice inicial para o próximo fold.
+
+        print(f"Fold {i + 1}: {len(fold_data)} elementos")  # Imprime o número de elementos no fold atual.
+
+    return folds  # Retorna a lista de folds.
+
 
 def accuracy(y_true, y_pred):
     # Calcula o número de previsões corretas comparando os índices do valor máximo (classe prevista) em cada amostra
@@ -45,7 +46,6 @@ def accuracy(y_true, y_pred):
     
     # Retorna a proporção de previsões corretas (acurácia)
     return correct / total
-
 
 #Classe que define o Neurônio
 class Perceptron:
@@ -86,7 +86,6 @@ class Perceptron:
         
         return self.activation(self.soma) #  Aplica a função de ativação na soma ponderada 
     
-    
     def compute_gradient(self, d_error):
         # Calcula o gradiente da função de ativação multiplicando a derivada do erro, a derivada da função de ativação e o último vetor de entrada.
         return d_error * self.d_activation(self.soma) * self.last_input
@@ -96,7 +95,8 @@ class Perceptron:
         self.weights = ((np.random.rand(len(self.weights)).astype(np.float64)) - 0.5)
         
 class MLP:
-    # O construtor inicializa a rede (self.network) como uma lista vazia e adiciona camadas conforme especificado em layers_size
+    # O construtor inicializa a rede (self.network) como uma lista vazia 
+    # e adiciona camadas conforme especificado em layers_size
     def __init__(self, layers_size, activation):
         self.network = []
 
@@ -128,10 +128,12 @@ class MLP:
         input_values = input_data.copy()  # Cria uma cópia da lista original
         input_values.append(1) # valor 1 para o bias 
         input_values = np.array(input_values, dtype=np.float64) #converte a lista de entrada em um array do tipo float64
-
+        
+        #Para cada camada da rede
         for layer in self.network:  
             layer_output_values = []
-
+            
+            # Para cada neurônio da camada
             for neuron in layer:
                 layer_output_values.append(neuron.process_input(input_values)) # cálculo da saída do neurônio
             
@@ -140,7 +142,7 @@ class MLP:
   
         return layer_output_values[:-1] # Retira o bias da lista
    
-   # Realiza o processo de feed foward e de backpropagation, onde:
+   # Realiza o processo de feedfoward e de backpropagation, onde:
    #inputs: dados de entrada para a rede
    #expected_output: a saída esperada ou target para os dados de entrada
    #learning_rate:  taxa de aprendizado usada para ajustar os pesos dos neurônios
@@ -176,9 +178,9 @@ class MLP:
 
             error = next_error # propaga o erro para a próxima camada
 
-        # # calcula a saída da rede após a alteração dos pesos (comentar para aumentar eficiência da execução)
-        # outputs = self.forward(inputs)
-        # outputs = np.array(outputs)
+        # calcula a saída da rede após a alteração dos pesos (comentar para aumentar eficiência da execução)
+        outputs = self.forward(inputs)
+        outputs = np.array(outputs)
         
         #retorna a saída da rede e o erro
         return outputs.tolist(), mse(expected_output, outputs)
@@ -236,20 +238,21 @@ class MLP:
             print(f"Epoca {epoch} || Erro treino: {total_train_error:.5f} || Erro validacao: {val_error:.5f} || Acuracia: {validation_accuracy:.4f}")
 
             # PARADA ANTECIPADA
-            if early_stop_epochs > 0:
+            if early_stop_epochs > 0:  # Verifica se o número de épocas para parada antecipada é maior que 0.
+    
+                if validation_accuracy >= best_accuracy:  # Se a acurácia de validação atual é maior ou igual à melhor acurácia registrada:
+                    best_epoch = epoch  # Atualiza a melhor época para a época atual.
+                    best_accuracy = validation_accuracy  # Atualiza a melhor acurácia para a acurácia de validação atual.
+                    self._save_best()  # Salva o modelo atual como o melhor modelo.
 
-                if validation_accuracy >= best_accuracy:
-                    best_epoch = epoch
-                    best_accuracy = validation_accuracy
-                    self._save_best()
+                elif epoch >= best_epoch + early_stop_epochs:  # Se a época atual é maior ou igual à soma da melhor época e o número de épocas para parada antecipada:
+                    self._load_best()  # Carrega o melhor modelo salvo.
+                    print("Parada Antecipada!!!! Melhor Epoca foi a {}".format(best_epoch, best_accuracy))  # Informa que a parada antecipada foi acionada e mostra qual foi a melhor época e a melhor acurácia.
+                    break  # Interrompe o treinamento.
 
-                elif epoch >= best_epoch + early_stop_epochs:
-                    self._load_best()
-                    print("Parada Antecipada!!!! Melhor Epoca foi a {}".format(best_epoch,best_accuracy))
-                    break
+        self._clear__copy()  # Limpa cópias temporárias do modelo ou estados.
+        return train_error_history, val_error_history  # Retorna o histórico de erro de treinamento e validação.
 
-        self._clear__copy()
-        return train_error_history, val_error_history
     
     def fit_cross_validation(self, data, labels, n_folds, lr, max_epochs=200, early_stop_epochs = 0):
         
@@ -305,7 +308,6 @@ class MLP:
 # Método .fit_holdout()
     
     def fit_holdout(self, data, labels, test_size=0.33, epochs=50, learning_rate=0.01, early_stop_epochs=0):
-        
         # Separa os dados de treinamento e de teste (de forma aleatória), sendo 2/3 dados de treinamento e 1/3 dados de teste
         num_samples = len(data)
         indices = np.random.permutation(num_samples)
