@@ -1,3 +1,0 @@
-- TO-DO
-    - matriz de confusão
-    - salvar a rede treinada em memória

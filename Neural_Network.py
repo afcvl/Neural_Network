@@ -344,6 +344,7 @@ class MLP:
         # É importante realizar o holdout diversas vezes para testar a validação com diferentes conjuntos de dados gerados aleatoriamente
         for i in range(k):
             print(f"Repeticao {i+1}/{k}")
+            self.reset_net_weights()
             accuracy = self.fit_holdout(data=data, labels=labels, test_size=test_size, epochs=epochs, learning_rate=learning_rate, early_stop_epochs=early_stop_epochs)
             accuracies.append(accuracy)
 
@@ -370,4 +371,7 @@ class MLP:
         self.network = pickle.loads(self._copy)
 
     def _clear__copy(self):
-        del self._copy
+        try:
+            del self._copy
+        except:
+            pass
